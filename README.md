@@ -1,0 +1,1 @@
+I like to take notes whenever I'm reading or watching tutorials and stuff.  I figured I would start keeping them in a repo to share with others in case it would be useful to someone else.  These are mostly in extensionless plain text files.

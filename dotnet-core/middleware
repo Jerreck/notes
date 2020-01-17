@@ -1,0 +1,62 @@
+Notes from this video (part 1): https://www.youtube.com/watch?v=HCxAERjO4C4
+
+Kestrel is the built-in webserver in asp.net core.  This is the default server that's started when you call dotnet run.
+
+1. A request comes into the web server (kestrel) Point A
+2. Point B is either a controller and/or a view (controller only would be API)
+3. from point a to point b, a response needs to be generated
+    - so between these we have a pipeline
+    - so wouldn't it be cool if we had custom software somewhere on the way through this pipeline that requests could pass through
+    - e.g. one could perform auth
+    - another could perform logging
+    - could also handle global exceptions
+    - that's really all middleware is
+        - software that lies bewteen point a and b in the pipeline so we can apply our own custom logic
+        - e.g. if auth fails, we short circuit and send response back to client
+        - if it's ok then it goes to the next middleware in the pipeline
+    - once request comes to controller, a response is generated
+        - this could be json (if it's an api) or html (if it's a web app, so a view would be generated)
+
+order of middleware is important, because it flows sequentially
+if we are placing logging middleware before auth, maybe we will peform some loggin or exception throwing on a request that's noth authed, so we would use resources we don't need
+    that's why auth is usually first piece of middleware
+
+startup class is where we configure middleware
+    specifically, within the Configure method (not ConfigureServices)
+    e.g. app.MiddleWare()
+    first middleware executed is first one called in the Configure method, second is second, etc.
+        so a request flows from top to bottm then back up
+    app.UseAuthentication() is ootb with asp.net core, can be configured to authenticate and authorize incoming request
+    app.UseCors() config cross-origin resource sharing
+        a lot of middleware needs to be configured (given arguments)
+    app.UseStaticFiles() needed if you want to serve static files to incoming request
+        doesn't need to pass through all other middleware, can just serve it
+    app.Use() can pass in ad-hoc behavior
+        e.g. an anonymous function
+        next() passes response to next middleware in the pipeline
+        not calling next() means that the pipeline is short-circuited and isn't sent further through the pipeline and response is sent back to client
+
+------------------
+
+notes from this video (part 2): https://www.youtube.com/watch?v=A1ZmMoiBELc&list=PL2E-vlKoo_v1dfQPJX3PuzT4B1ZJulQ-p&index=2
+
+app.Run() 
+    generates respone and sends back to the client, another way of short-circuiting 
+    always a termination middleware, so use it as the last one in the pipeline or to short-circuit
+
+app.Map()
+    an extension method
+    takes IApplicationBuilder param
+    provide a path string - indicates path on which we want to perform actions
+    provide an Action of tpye IApplicationBuilder
+    according to md docs, Map() is used to branch the pipeline, so if a request matches the provided path, then that code is executed
+        https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/?view=aspnetcore-3.1#branch-the-middleware-pipeline
+        conversely, if a request does not match that path, then it's not executed
+    
+        by creating a branch, you can also continue to add middleware within this branch
+
+app.MapWhen()
+    used to create a branch based any info within httpcontext
+    when to use map or mapwhen?
+        map can only be based on path
+        mapwhen can be based on any condition that we could infer from the httpcontext
